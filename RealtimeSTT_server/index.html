@@ -1,239 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- 文档的基本设置：字符编码和视口设置 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 网页标题：显示在浏览器标签页上 -->
   <title>Browser STT Client</title>
   <style>
+    /* CSS样式：控制网页的外观 */
+    /* 整个页面的基本样式 */
     body {
-      background-color: #f4f4f9;
-      color: #333;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      background-color: #f4f4f9; /* 淡蓝灰色背景，像天空的颜色 */
+      color: #333; /* 深灰色文字，方便阅读 */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 设置文字字体 */
+      display: flex; /* 弹性布局，使内容居中 */
+      align-items: center; /* 垂直居中 */
+      justify-content: center; /* 水平居中 */
+      height: 100vh; /* 100%视口高度 */
+      margin: 0; /* 去掉页面边距 */
     }
+    /* 主容器样式 */
     #container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 700px;
-      padding: 20px;
-      box-sizing: border-box;
-      gap: 20px; /* Add more vertical space between items */
-      height: 90%; /* Fixed height to prevent layout shift */
+      display: flex; /* 弹性布局 */
+      flex-direction: column; /* 垂直排列所有元素 */
+      align-items: center; /* 水平居中 */
+      width: 100%; /* 宽度100% */
+      max-width: 700px; /* 最大宽度700像素，避免在大屏幕上过宽 */
+      padding: 20px; /* 内边距20像素 */
+      box-sizing: border-box; /* 盒模型：内边距和边框包含在元素宽度内 */
+      gap: 20px; /* 元素之间的间距 */
+      height: 90%; /* 高度为页面的90% */
     }
+    /* 状态显示区域样式 */
     #status {
-      color: #0056b3;
-      font-size: 20px;
-      text-align: center;
+      color: #0056b3; /* 蓝色文字 */
+      font-size: 20px; /* 文字大小 */
+      text-align: center; /* 文字居中 */
     }
+    /* 即时转写文本容器样式 */
     #transcriptionContainer {
-      height: 90px; /* Fixed height for approximately 3 lines of text */
-      overflow-y: auto;
-      width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-      background-color: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      height: 90px; /* 固定高度，大约能显示3行文字 */
+      overflow-y: auto; /* 内容超出时显示垂直滚动条 */
+      width: 100%; /* 宽度100% */
+      padding: 10px; /* 内边距 */
+      box-sizing: border-box; /* 盒模型设置 */
+      background-color: #f9f9f9; /* 浅灰色背景 */
+      border: 1px solid #ddd; /* 灰色边框 */
+      border-radius: 5px; /* 圆角边框，看起来更友好 */
     }
+    /* 即时转写文本样式 */
     #transcription {
-      font-size: 18px;
-      line-height: 1.6;
-      color: #333;
-      word-wrap: break-word;
+      font-size: 18px; /* 文字大小 */
+      line-height: 1.6; /* 行高：使文字间距适中，易于阅读 */
+      color: #333; /* 文字颜色 */
+      word-wrap: break-word; /* 长单词换行 */
     }
+    /* 完整文本容器样式 */
     #fullTextContainer {
-      height: 150px; /* Fixed height to prevent layout shift */
-      overflow-y: auto;
-      width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-      background-color: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      height: 150px; /* 固定高度 */
+      overflow-y: auto; /* 内容超出时显示垂直滚动条 */
+      width: 100%; /* 宽度100% */
+      padding: 10px; /* 内边距 */
+      box-sizing: border-box; /* 盒模型设置 */
+      background-color: #f9f9f9; /* 浅灰色背景 */
+      border: 1px solid #ddd; /* 灰色边框 */
+      border-radius: 5px; /* 圆角边框 */
     }
+    /* 完整文本样式 */
     #fullText {
-      color: #4CAF50;
-      font-size: 18px;
-      font-weight: 600;
-      word-wrap: break-word;
+      color: #4CAF50; /* 绿色文字，表示已确认的文本 */
+      font-size: 18px; /* 文字大小 */
+      font-weight: 600; /* 字体粗细 */
+      word-wrap: break-word; /* 长单词换行 */
     }
+    /* 最后一个词的样式，使其突出显示 */
     .last-word {
-      color: #007bff;
-      font-weight: 600;
+      color: #007bff; /* 蓝色文字 */
+      font-weight: 600; /* 加粗 */
     }
+    /* 按钮样式 */
     button {
-      padding: 12px 24px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      margin: 5px;
-      transition: background-color 0.3s ease;
-      color: #fff;
-      background-color: #0056b3;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 12px 24px; /* 内边距，使按钮足够大，容易点击 */
+      font-size: 16px; /* 文字大小 */
+      cursor: pointer; /* 鼠标悬停时显示手型光标 */
+      border: none; /* 无边框 */
+      border-radius: 5px; /* 圆角 */
+      margin: 5px; /* 外边距 */
+      transition: background-color 0.3s ease; /* 背景色变化时平滑过渡 */
+      color: #fff; /* 白色文字 */
+      background-color: #0056b3; /* 蓝色背景 */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
     }
+    /* 鼠标悬停在按钮上时的样式 */
     button:hover {
-      background-color: #007bff;
+      background-color: #007bff; /* 更亮的蓝色 */
     }
+    /* 禁用按钮样式 */
     button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
+      background-color: #cccccc; /* 灰色背景 */
+      cursor: not-allowed; /* 禁止鼠标样式 */
     }
   </style>
 </head>
 <body>
+  <!-- 主容器：包含所有内容 -->
   <div id="container">
+    <!-- 状态显示区域：显示当前程序运行状态 -->
     <div id="status">Press "Start Recording"...</div>
+    <!-- 开始录音按钮：点击后启动麦克风录音 -->
     <button id="startButton" onclick="startRecording()">Start Recording</button>
+    <!-- 停止录音按钮：点击后停止麦克风录音，初始状态为禁用 -->
     <button id="stopButton" onclick="stopRecording()" disabled>Stop Recording</button>
+    <!-- 即时转写容器：显示正在识别的文字 -->
     <div id="transcriptionContainer">
       <div id="transcription" class="realtime"></div>
     </div>
+    <!-- 完整文本容器：显示已经确认的完整句子 -->
     <div id="fullTextContainer">
       <div id="fullText"></div>
     </div>
   </div>
 
   <script>
-    const statusDiv = document.getElementById("status");
-    const transcriptionDiv = document.getElementById("transcription");
-    const fullTextDiv = document.getElementById("fullText");
-    const startButton = document.getElementById("startButton");
-    const stopButton = document.getElementById("stopButton");
+    /* JavaScript代码：负责网页的功能和交互 */
+    
+    // 获取页面上的HTML元素，以便后续操作
+    const statusDiv = document.getElementById("status"); // 状态显示区域
+    const transcriptionDiv = document.getElementById("transcription"); // 即时转写文本区域
+    const fullTextDiv = document.getElementById("fullText"); // 完整文本区域
+    const startButton = document.getElementById("startButton"); // 开始按钮
+    const stopButton = document.getElementById("stopButton"); // 停止按钮
 
-    const controlURL = "ws://127.0.0.1:8011";
-    const dataURL = "ws://127.0.0.1:8012";
-    let dataSocket;
-    let audioContext;
-    let mediaStream;
-    let mediaProcessor;
+    // 服务器连接地址
+    const controlURL = "ws://127.0.0.1:8011"; // 控制通道地址
+    const dataURL = "ws://127.0.0.1:8012"; // 数据通道地址
+    // 声明变量，但暂不赋值
+    let dataSocket; // 数据通道WebSocket连接
+    let audioContext; // 音频上下文
+    let mediaStream; // 媒体流（从麦克风获取）
+    let mediaProcessor; // 媒体处理器
 
-    // Connect to the data WebSocket
+    /**
+     * 连接到数据WebSocket服务器
+     * WebSocket是一种允许浏览器和服务器保持持久连接的技术
+     * 想象成一根电话线，你和服务器可以随时通话
+     */
     function connectToDataSocket() {
+      // 创建WebSocket连接
       dataSocket = new WebSocket(dataURL);
 
+      // 连接成功时的处理函数
       dataSocket.onopen = () => {
-        statusDiv.textContent = "Connected to STT server.";
-        console.log("Connected to data WebSocket.");
+        statusDiv.textContent = "Connected to STT server."; // 更新状态显示
+        console.log("Connected to data WebSocket."); // 在控制台记录日志
       };
 
+      // 接收到服务器消息时的处理函数
       dataSocket.onmessage = (event) => {
         try {
+          // 解析服务器发来的JSON消息
           const message = JSON.parse(event.data);
 
           if (message.type === "realtime") {
-            // Show real-time transcription with the last word in bold, orange
+            // 实时转写，显示带有突出显示最后一个词的文本
+            // 把文本按空格分割成单词数组
             let words = message.text.split(" ");
+            // 取出最后一个词
             let lastWord = words.pop();
+            // 重新组合文本，最后一个词用特殊样式显示
             transcriptionDiv.innerHTML = `${words.join(" ")} <span class="last-word">${lastWord}</span>`;
 
-            // Auto-scroll to the bottom of the transcription container
+            // 自动滚动到转写容器底部，确保能看到最新内容
             const transcriptionContainer = document.getElementById("transcriptionContainer");
             transcriptionContainer.scrollTop = transcriptionContainer.scrollHeight;
           } else if (message.type === "fullSentence") {
-            // Accumulate the final transcription in green
+            // 收到完整句子时，将其添加到完整文本区域
             fullTextDiv.innerHTML += message.text + " ";
             transcriptionDiv.innerHTML = message.text;
 
-            // Scroll to the bottom of fullTextContainer when new text is added
+            // 滚动到完整文本容器底部，确保能看到最新内容
             const fullTextContainer = document.getElementById("fullTextContainer");
             fullTextContainer.scrollTop = fullTextContainer.scrollHeight;
           }
         } catch (e) {
+          // 如果解析消息时出错，在控制台记录错误
           console.error("Error parsing message:", e);
         }
       };
 
+      // 连接关闭时的处理函数
       dataSocket.onclose = () => {
-        statusDiv.textContent = "Disconnected from STT server.";
+        statusDiv.textContent = "Disconnected from STT server."; // 更新状态显示
       };
 
+      // 连接出错时的处理函数
       dataSocket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        statusDiv.textContent = "Error connecting to the STT server.";
+        console.error("WebSocket error:", error); // 在控制台记录错误
+        statusDiv.textContent = "Error connecting to the STT server."; // 更新状态显示
       };
     }
 
-    // Start recording audio from the microphone
+    /**
+     * 开始录音函数
+     * 这个函数会请求麦克风访问权限，并开始录制声音
+     * 就像按下录音机的录制按钮一样
+     */
     async function startRecording() {
       try {
+        // 禁用开始按钮，启用停止按钮
         startButton.disabled = true;
         stopButton.disabled = false;
+        // 更新状态显示
         statusDiv.textContent = "Recording...";
+        // 清空转写区域
         transcriptionDiv.textContent = "";
         fullTextDiv.textContent = "";
 
+        // 创建音频上下文，用于处理音频数据
         audioContext = new AudioContext();
+        // 请求麦克风访问权限，并获取媒体流
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 创建媒体流音频源
         const input = audioContext.createMediaStreamSource(mediaStream);
 
-        // Set up processor for audio chunks
+        // 设置音频处理器，处理音频数据块
         mediaProcessor = audioContext.createScriptProcessor(1024, 1, 1);
+        // 当有新的音频数据可用时，调用此函数
         mediaProcessor.onaudioprocess = (event) => {
+          // 获取录制的音频数据
           const audioData = event.inputBuffer.getChannelData(0);
+          // 发送音频数据到服务器
           sendAudioChunk(audioData, audioContext.sampleRate);
         };
 
+        // 连接音频输入到处理器
         input.connect(mediaProcessor);
+        // 连接处理器到音频输出（虽然不会播放声音）
         mediaProcessor.connect(audioContext.destination);
 
+        // 连接到数据WebSocket服务器
         connectToDataSocket();
       } catch (error) {
+        // 如果访问麦克风出错，记录错误并停止录音
         console.error("Error accessing microphone:", error);
         statusDiv.textContent = "Error accessing microphone.";
         stopRecording();
       }
     }
 
-    // Stop recording audio and close resources
+    /**
+     * 停止录音函数
+     * 断开所有连接，释放资源
+     * 就像按下录音机的停止按钮一样
+     */
     function stopRecording() {
+      // 如果处理器和音频上下文存在，断开连接并关闭
       if (mediaProcessor && audioContext) {
         mediaProcessor.disconnect();
         audioContext.close();
       }
 
+      // 如果媒体流存在，停止所有轨道
       if (mediaStream) {
         mediaStream.getTracks().forEach(track => track.stop());
       }
 
+      // 如果WebSocket连接存在，关闭它
       if (dataSocket) {
         dataSocket.close();
       }
 
+      // 启用开始按钮，禁用停止按钮
       startButton.disabled = false;
       stopButton.disabled = true;
+      // 更新状态显示
       statusDiv.textContent = "Stopped recording.";
     }
 
-    // Send an audio chunk to the server
+    /**
+     * 发送音频数据块到服务器
+     * @param {Float32Array} audioData - 音频数据（32位浮点数数组）
+     * @param {number} sampleRate - 采样率（每秒采样次数）
+     * 
+     * 这个函数把录制的声音数据转换成服务器能理解的格式
+     * 就像把你说的话翻译成计算机语言
+     */
     function sendAudioChunk(audioData, sampleRate) {
+      // 检查WebSocket是否连接且处于开放状态
       if (dataSocket && dataSocket.readyState === WebSocket.OPEN) {
+        // 创建一个Float32数组，包含音频数据
         const float32Array = new Float32Array(audioData);
+        // 创建一个Int16数组，用于存储转换后的PCM数据
         const pcm16Data = new Int16Array(float32Array.length);
 
+        // 将32位浮点数转换为16位整数
+        // 浮点数范围为-1到1，转换为-32767到32767的整数
         for (let i = 0; i < float32Array.length; i++) {
+          // 先确保值在-1到1之间，然后乘以0x7FFF（32767）转换为16位整数
           pcm16Data[i] = Math.max(-1, Math.min(1, float32Array[i])) * 0x7FFF;
         }
 
+        // 创建元数据字符串，包含采样率信息
         const metadata = JSON.stringify({ sampleRate });
+        // 创建一个32位整数数组，存储元数据长度
         const metadataLength = new Uint32Array([metadata.length]);
+        // 将元数据字符串转换为字节数组
         const metadataBuffer = new TextEncoder().encode(metadata);
 
+        // 创建合并后的消息数组，包含元数据长度、元数据和PCM数据
         const message = new Uint8Array(
           metadataLength.byteLength + metadataBuffer.byteLength + pcm16Data.byteLength
         );
         
+        // 填充消息数组：先放元数据长度，再放元数据，最后放PCM数据
         message.set(new Uint8Array(metadataLength.buffer), 0);
         message.set(metadataBuffer, metadataLength.byteLength);
         message.set(new Uint8Array(pcm16Data.buffer), metadataLength.byteLength + metadataBuffer.byteLength);
 
+        // 发送消息到服务器
         dataSocket.send(message);
       }
     }

@@ -798,45 +798,71 @@ async def main_async():
     }
 
     try:
-        # Attempt to start control and data servers
+        # 尝试启动控制服务器和数据服务器
+        # 这就像开两个电话线，一个用来发送指令，一个用来传送声音和文字
         control_server = await websockets.serve(control_handler, "localhost", args.control)
         data_server = await websockets.serve(data_handler, "localhost", args.data)
-        print(f"{bcolors.OKGREEN}Control server started on {bcolors.OKBLUE}ws://localhost:{args.control}{bcolors.ENDC}")
-        print(f"{bcolors.OKGREEN}Data server started on {bcolors.OKBLUE}ws://localhost:{args.data}{bcolors.ENDC}")
+        
+        # 在屏幕上显示服务器已经成功启动的彩色提示信息
+        # 这就像告诉用户："你的语音识别服务已经准备好啦！"
+        print(f"{bcolors.OKGREEN}控制服务器启动成功，地址是 {bcolors.OKBLUE}ws://localhost:{args.control}{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}数据服务器启动成功，地址是 {bcolors.OKBLUE}ws://localhost:{args.data}{bcolors.ENDC}")
 
-        # Start the broadcast and recorder threads
+        # 启动广播任务和录音机线程
+        # 想象一下，这就像安排两个小助手：
+        # 一个助手负责把识别结果发送给所有连接的用户
+        # 另一个助手负责处理录音和语音识别
         broadcast_task = asyncio.create_task(broadcast_audio_messages())
 
         recorder_thread = threading.Thread(target=_recorder_thread, args=(loop,))
         recorder_thread.start()
+        # 等待录音机准备就绪，就像等待录音机预热完毕才能开始使用
         recorder_ready.wait()
 
-        print(f"{bcolors.OKGREEN}Server started. Press Ctrl+C to stop the server.{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}服务器已启动。按下 Ctrl+C 可以停止服务器。{bcolors.ENDC}")
 
-        # Run server tasks
+        # 运行服务器任务，保持服务器一直工作
+        # 这就像让服务员一直站在柜台前，随时为客人服务
         await asyncio.gather(control_server.wait_closed(), data_server.wait_closed(), broadcast_task)
     except OSError as e:
-        print(f"{bcolors.FAIL}Error: Could not start server on specified ports. It’s possible another instance of the server is already running, or the ports are being used by another application.{bcolors.ENDC}")
+        # 如果端口被占用，就显示错误信息
+        # 这就像你想在教室里坐下，但发现座位已经被别人占了
+        print(f"{bcolors.FAIL}错误：无法在指定端口启动服务器。可能是另一个服务器实例已经在运行，或者端口被其他应用程序占用。{bcolors.ENDC}")
     except KeyboardInterrupt:
-        print(f"{bcolors.WARNING}Server interrupted by user, shutting down...{bcolors.ENDC}")
+        # 如果用户按下Ctrl+C，就优雅地关闭服务器
+        # 这就像有人按下电梯的紧急停止按钮，电梯会先把人送到最近的楼层，然后才停止工作
+        print(f"{bcolors.WARNING}用户中断服务器，正在关闭...{bcolors.ENDC}")
     finally:
-        # Shutdown procedures for recorder and server threads
+        # 无论发生什么情况，最后都要执行关闭程序
+        # 这就像无论上课铃声什么时候响，我们都要先收拾好书包再离开教室
         await shutdown_procedure()
-        print(f"{bcolors.OKGREEN}Server shutdown complete.{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}服务器关闭完成。{bcolors.ENDC}")
 
 async def shutdown_procedure():
+    """
+    关闭程序的函数
+    
+    这个函数负责优雅地关闭所有正在运行的组件，就像关灯前先让大家准备好一样。
+    它会按顺序关闭录音机、停止录音线程，并取消所有正在运行的任务。
+    """
     global stop_recorder, recorder_thread
     if recorder:
+        # 告诉录音机停止工作
+        # 想象一下：先通知录音机"我们要关机了"，然后按停止按钮，最后关闭电源
         stop_recorder = True
-        recorder.abort()
-        recorder.stop()
-        recorder.shutdown()
-        print(f"{bcolors.OKGREEN}Recorder shut down{bcolors.ENDC}")
+        recorder.abort()  # 中止当前录音
+        recorder.stop()   # 停止录音机
+        recorder.shutdown()  # 完全关闭录音机
+        print(f"{bcolors.OKGREEN}录音机已关闭{bcolors.ENDC}")
 
         if recorder_thread:
+            # 等待录音线程完成工作
+            # 这就像等待你的朋友收拾完书包，然后一起回家
             recorder_thread.join()
-            print(f"{bcolors.OKGREEN}Recorder thread finished{bcolors.ENDC}")
+            print(f"{bcolors.OKGREEN}录音线程已结束{bcolors.ENDC}")
 
+    # 取消所有正在运行的任务（除了当前任务）
+    # 这就像学校放学时，取消所有还没完成的活动，让大家都可以回家
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
     for task in tasks:
         task.cancel()
